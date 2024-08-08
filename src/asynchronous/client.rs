@@ -74,8 +74,12 @@ impl Client {
 
         let (tx, mut rx): (ResultSender, ResultReceiver) = mpsc::channel(100);
 
-        // TODO: check return.
-        self.streams.lock().unwrap().insert(stream_id, tx);
+        if let Ok(mut streams) = self.streams.lock() {
+            streams.insert(stream_id, tx);
+        } else {
+            return Err(Error::Others("Failed to acquire lock on streams".to_string()));
+        }
+
 
         self.req_tx
             .send(msg)
@@ -136,8 +140,12 @@ impl Client {
         }
 
         let (tx, rx): (ResultSender, ResultReceiver) = mpsc::channel(100);
-        // TODO: check return
-        self.streams.lock().unwrap().insert(stream_id, tx);
+        if let Ok(mut streams) = self.streams.lock() {
+            streams.insert(stream_id, tx);
+        } else {
+            return Err(Error::Others("Failed to acquire lock on streams".to_string()));
+        }
+
         self.req_tx
             .send(msg)
             .await
